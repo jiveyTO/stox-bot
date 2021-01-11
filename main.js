@@ -1,11 +1,12 @@
+require('dotenv').config();
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
 const dateFormat = require("dateformat");
 
 const client = new Discord.Client();
-const PREFIX = '!';
-const env = 'PROD';
+const env = process.env.ENVIRONMENT || 'DEV';
 let sequelize = null;
+let PREFIX = '!';
 
 if ( env === 'PROD' ) {
     sequelize = new Sequelize(process.env.DATABASE_URL, {
@@ -21,30 +22,9 @@ if ( env === 'PROD' ) {
         // SQLite only
         storage: 'database.sqlite',
     });
+    PREFIX = '#';
 }
 
-
-/*
- * equivalent to: CREATE TABLE tags(
- * name VARCHAR(255),
- * description TEXT,
- * username VARCHAR(255),
- * usage INT
- * );
- */
-const Tags = sequelize.define('tags', {
-	name: {
-		type: Sequelize.STRING,
-		unique: true,
-	},
-	description: Sequelize.TEXT,
-	username: Sequelize.STRING,
-	usage_count: {
-		type: Sequelize.INTEGER,
-		defaultValue: 0,
-		allowNull: false,
-	},
-});
 
 /*
  * equivalent to: CREATE TABLE trades(
@@ -71,10 +51,10 @@ const Trades = sequelize.define('trades', {
 });
 
 client.once('ready', () => {
-    if ( env === 'DEV' ) {
-        console.log('JanTest bot is online');
-    } else {
+    if ( env === 'PROD' ) {
         console.log('Stox bot is online');
+    } else {
+        console.log('JanTest bot is online');
     }
 
     Trades.sync();
@@ -102,28 +82,6 @@ client.on('message', async msg => {
     } else if (command === 'booktrade') {
         askQuestion(msg, questions, 0);
         //msg.reply("im here at the end");
-    } else if (command === 'addtrade') {
-        // [delta]
-
-        const splitArgs = commandArgs.split(' ');
-        const tagName = splitArgs.shift();
-        const tagDescription = splitArgs.join(' ');
-
-        try {
-            // equivalent to: INSERT INTO tags (name, description, username) values (?, ?, ?);
-            const tag = await Tags.create({
-                name: tagName,
-                description: tagDescription,
-                username: msg.author.username,
-            });
-            return msg.reply(`Tag ${tag.name} added.`);
-        }
-        catch (e) {
-            if (e.name === 'SeqelizeUniqueConstraintError') {
-                return msg.reply('That tag already exists');
-            }
-            return msg.reply('Something went wrong with adding a tag');
-        }
     } else if (command === 'edittrade') {
         // [zeta]
     } else if (command === 'tradeinfo') {
@@ -135,7 +93,7 @@ client.on('message', async msg => {
         userFilter = commandArgs[0];
 
         if ( userFilter ) {
-            // If they enter their @username
+            // if they enter their @username
             if ( userFilter.substring(0,3) === '<@!' ) {
                 let user = await client.users.fetch(userFilter.substring(3,userFilter.length-1));
                 userFilter = user.username;
@@ -145,8 +103,24 @@ client.on('message', async msg => {
 
         const tradesList = await Trades.findAll(whereClause);
         tradesList.map( trade => {
-            const tradeDate = dateFormat(trade.expiry, "mediumDate");
-            msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${tradeDate} ${trade.strike} ${trade.type} at $${trade.price}`);
+            const t = trade.expiry;
+            const utcStr = `${t.getUTCFullYear()}-${t.getUTCMonth()+1}-${t.getUTCDate()}`;
+            const estStr = `${utcStr} 16:00:00 EST`;
+            let expiredStr = "";
+
+            console.log("estStr = " + estStr);
+            console.log("Date.now() = " + Date.now());
+            console.log("Date.parse(estStr) = " + Date.parse(estStr));
+
+            // check for an expired trade
+            if ( Date.now() > Date.parse(estStr) ) {
+                expiredStr = "[Expired]"
+            }
+
+            // Reformat expiryDate
+            const expiryDateStr = dateFormat(utcStr, "mediumDate");
+
+            msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} ${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
         });
     } else if (command === 'removetag') {
         // [mu]
@@ -164,7 +138,7 @@ async function askQuestion(msg, questionsArray, index) {
 
         const thisYear = dateFormat('yyyy'); 
         const enteredExpiry = questionsArray[3].answer; 
-        const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${dateFormat(enteredExpiry, "mmm d")} ${thisYear}` : dateFormat(enteredExpiry, "mmm d yyyy");
+        const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
         
         // TODO remove this from here when askQuestion is made into a recursive promise
         try {
@@ -211,6 +185,10 @@ async function askQuestion(msg, questionsArray, index) {
     
     msg.reply(questionsArray[index].question);
     //msg.channel.send(questionsArray[index].question);
+}
+
+function expireTradeOption(id) {
+
 }
 
 if ( env === 'DEV' ) {

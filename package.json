@@ -16,6 +16,7 @@
   "dependencies": {
     "dateformat": "^4.4.1",
     "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
     "pg": "^8.5.1",
     "sequelize": "^6.3.5",
     "sqlite3": "^5.0.0"
