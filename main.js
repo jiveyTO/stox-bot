@@ -2,6 +2,7 @@ require('dotenv').config();
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
 const dateFormat = require("dateformat");
+const stockDataHelper = require("./lib/stockDataHelper");
 
 const client = new Discord.Client();
 const env = process.env.ENVIRONMENT || 'DEV';
@@ -79,6 +80,10 @@ client.on('message', async msg => {
 
     if (command === 'ping') {
         msg.reply('Pong!');
+    } else if (command === 'quote') {
+        const sym = stockDataHelper.parseCommandForSymbol(commandArgs[0]);
+        const embed = await stockDataHelper.stockQuoteMessageEmbed(sym);
+        msg.channel.send(embed);
     } else if (command === 'booktrade') {
         askQuestion(msg, questions, 0);
         //msg.reply("im here at the end");
@@ -88,7 +93,7 @@ client.on('message', async msg => {
         // [theta]
     } else if (command === 'listtrades') {
         // equivalent to: SELECT * FROM trades WHERE trader=<userFilter>;
-        
+
         let whereClause = {};
         userFilter = commandArgs[0];
 
@@ -98,7 +103,7 @@ client.on('message', async msg => {
                 let user = await client.users.fetch(userFilter.substring(3,userFilter.length-1));
                 userFilter = user.username;
             }
-            whereClause = { where: { trader: userFilter } }; 
+            whereClause = { where: { trader: userFilter } };
         }
 
         const tradesList = await Trades.findAll(whereClause);
@@ -136,10 +141,10 @@ async function askQuestion(msg, questionsArray, index) {
         console.log(questionsArray);
         msg.reply(`⭐️ ${questionsArray[2].answer} ${questionsArray[6].answer} x ${questionsArray[0].answer} ${questionsArray[3].answer} ${questionsArray[4].answer} ${questionsArray[1].answer} at $${questionsArray[5].answer} `);
 
-        const thisYear = dateFormat('yyyy'); 
-        const enteredExpiry = questionsArray[3].answer; 
+        const thisYear = dateFormat('yyyy');
+        const enteredExpiry = questionsArray[3].answer;
         const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
-        
+
         // TODO remove this from here when askQuestion is made into a recursive promise
         try {
             // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
@@ -163,7 +168,7 @@ async function askQuestion(msg, questionsArray, index) {
         }
         return;
     }
-    
+
     // `m` is a message object that will be passed through the filter function
     const filter = m => m.author.id === msg.author.id;
     const collector = msg.channel.createMessageCollector(filter, { time: 25000, max: 1 });
@@ -172,17 +177,17 @@ async function askQuestion(msg, questionsArray, index) {
         console.log(`Collected ${m.content}`);
         questionsArray[index].answer = m.content;
     });
-        
+
     collector.on('end', collected => {
         console.log(`Collected ${collected.size} items`);
 
-        if(collected.size == 0) {    
+        if(collected.size == 0) {
             msg.reply('Sorry I didn\'t get a response, try booking your trade again');
         } else {
             askQuestion(msg, questionsArray, index+1 );
         }
     });
-    
+
     msg.reply(questionsArray[index].question);
     //msg.channel.send(questionsArray[index].question);
 }
@@ -191,8 +196,4 @@ function expireTradeOption(id) {
 
 }
 
-if ( env === 'DEV' ) {
-    client.login('Nzk1NDEzNTA1NjQ5MTQ3OTA2.X_JAjQ.2kQKVx0rRDIi-zJADsJabkQPbgo'); // test JanTest bot
-} else {
-    client.login('Nzk2Mzg1MzM1MzE0ODc0MzY4.X_XJpA.OsfM7aNt9HlvBYNMrArc9CawWn8'); // live Stox bot
-}
+client.login(process.env.DISCORD_BOT_TOKEN);
