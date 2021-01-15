@@ -1,3 +1,5 @@
+const dateFormat = require("dateformat");
+
 var dt = new Date();
 console.log(dt); // Gives Tue Mar 22 2016 09:30:00 GMT+0530 (IST)
 
@@ -24,3 +26,7 @@ console.log(dt4);
 var dt5 = new Date();
 dt5.setTime(Date.parse('2021-01-09 16:00:00 EST') - dt5.getTimezoneOffset()*60*1000);
 console.log(dt5);
+console.log(dt5.isDst)
+
+
+console.log(dateFormat("jan 20 23", "yyyy-mm-dd"));

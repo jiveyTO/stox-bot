@@ -26,7 +26,6 @@ if ( env === 'PROD' ) {
     PREFIX = '#';
 }
 
-
 /*
  * equivalent to: CREATE TABLE trades(
  * id INT,
@@ -113,10 +112,6 @@ client.on('message', async msg => {
             const estStr = `${utcStr} 16:00:00 EST`;
             let expiredStr = "";
 
-            console.log("estStr = " + estStr);
-            console.log("Date.now() = " + Date.now());
-            console.log("Date.parse(estStr) = " + Date.parse(estStr));
-
             // check for an expired trade
             if ( Date.now() > Date.parse(estStr) ) {
                 expiredStr = "[Expired]"
@@ -125,7 +120,7 @@ client.on('message', async msg => {
             // Reformat expiryDate
             const expiryDateStr = dateFormat(utcStr, "mediumDate");
 
-            msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} ${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
+            msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
         });
     } else if (command === 'removetag') {
         // [mu]
@@ -139,24 +134,33 @@ async function askQuestion(msg, questionsArray, index) {
     console.log(`Index = ${index}`);
     if(index+1>questionsArray.length) {
         console.log(questionsArray);
-        msg.reply(`⭐️ ${questionsArray[2].answer} ${questionsArray[6].answer} x ${questionsArray[0].answer} ${questionsArray[3].answer} ${questionsArray[4].answer} ${questionsArray[1].answer} at $${questionsArray[5].answer} `);
 
-        const thisYear = dateFormat('yyyy');
-        const enteredExpiry = questionsArray[3].answer;
+        // Apply general field rules
+        const t = questionsArray.map( item => item.answer.trim() );
+        console.log(t);
+
+
+        // Format the year in case they didn't enter it
+        const thisYear = dateFormat('yyyy'); 
+        const enteredExpiry = t[3]; 
         const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
+       
+        // Format the currency
+        const strike = ( t[4].charAt(0) == '$' ) ? t[4].slice(1) : t[4];
+        const price = ( t[5].charAt(0) == '$' ) ? t[5].slice(1) : t[5];
 
         // TODO remove this from here when askQuestion is made into a recursive promise
         try {
             // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
             const tag = await Trades.create({
                 trader: msg.author.username,
-                ticker: questionsArray[0].answer,
-                type: questionsArray[1].answer,
-                action: questionsArray[2].answer,
+                ticker: t[0],
+                type: t[1],
+                action: t[2],
                 expiry: expiry,
-                strike: questionsArray[4].answer,
-                price: questionsArray[5].answer,
-                quantity: questionsArray[6].answer
+                strike: strike,
+                price: price,
+                quantity: t[6]
             });
         }
         catch (e) {
@@ -166,12 +170,15 @@ async function askQuestion(msg, questionsArray, index) {
             console.log("DB error = " + e);
             return msg.reply('Something went wrong with adding a trade');
         }
+
+
+        msg.reply(`⭐️ ${questionsArray[2].answer} ${questionsArray[6].answer} x ${questionsArray[0].answer} ${questionsArray[3].answer} $${strike} ${questionsArray[1].answer} at $${price}`);
         return;
     }
 
     // `m` is a message object that will be passed through the filter function
     const filter = m => m.author.id === msg.author.id;
-    const collector = msg.channel.createMessageCollector(filter, { time: 25000, max: 1 });
+    const collector = msg.channel.createMessageCollector(filter, { time: 60000, max: 1 });
 
     collector.on('collect', m => {
         console.log(`Collected ${m.content}`);
