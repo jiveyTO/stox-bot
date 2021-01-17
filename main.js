@@ -129,7 +129,6 @@ client.on('message', async msg => {
 
 });
 
-
 // Repond to booking a trade via a slash command
 // TODO: Replace when Discord.js has implemented an official solution
 client.ws.on('INTERACTION_CREATE', async interaction => {
