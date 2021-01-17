@@ -123,15 +123,9 @@ client.on('message', async msg => {
 
             // add the trade to the list
             tradeListStr += tradeStr + "\n";
-
-            //msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
         });
         msg.channel.send("```diff\n" + tradeListStr + "\n```");
-        console.log(msg);
-    } else if (command === 'removetag') {
-        // [mu]
-    }
-
+    } 
 
 })
 
