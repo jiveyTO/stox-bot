@@ -119,48 +119,90 @@ client.on('message', async msg => {
 
             // Reformat expiryDate
             const expiryDateStr = dateFormat(utcStr, "mediumDate");
-
             msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
         });
+        console.log(msg);
     } else if (command === 'removetag') {
         // [mu]
     }
 
 
-})
+});
+
+
+// Repond to booking a trade via a slash command
+// TODO: Replace when Discord.js has implemented an official solution
+client.ws.on('INTERACTION_CREATE', async interaction => {
+    console.log(interaction);
+    console.log(interaction.data);
+
+    const trade = formatTrade(interaction.data.options);
+
+    const tradeStr = `<@${interaction.member.user.id}>: ${trade.action} ${trade.quantity} x ${trade.ticker}`
+                     + ` ${trade.expiryDisplay} $${trade.strike} ${trade.type} at $${trade.price}`; 
+
+    try {
+        // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
+        const tag = await Trades.create({
+            trader: interaction.member.user.username,
+            ticker: trade.ticker,
+            type: trade.type,
+            action: trade.action,
+            expiry: trade.expiry,
+            strike: trade.strike,
+            price: trade.price,
+            quantity: trade.quantity
+        });
+   
+        // Show the logged trade
+        // Type 3 will eat the original message aka ephemeral
+        client.api.interactions(interaction.id, interaction.token).callback.post({
+            data: {
+                type: 3,
+                data: {
+                    content: `⭐️ ${tradeStr}`
+                }
+            }
+        })
+    }
+    catch (e) {
+        let errStr = `Something went wrong with adding a trade for ${tradeStr}`; 
+
+        if (e.name === 'SeqelizeUniqueConstraintError') {
+            errStr = 'That trade already exists';
+        }
+
+        console.log("DB error = " + e);
+
+        client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+            type: 3,
+            data: {
+                content: errStr
+            }
+        }
+    })}
+
+});
 
 
 async function askQuestion(msg, questionsArray, index) {
-    console.log(`Index = ${index}`);
     if(index+1>questionsArray.length) {
         console.log(questionsArray);
 
-        // Apply general field rules
-        const t = questionsArray.map( item => item.answer.trim() );
-        console.log(t);
-
-
-        // Format the year in case they didn't enter it
-        const thisYear = dateFormat('yyyy'); 
-        const enteredExpiry = t[3]; 
-        const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
-       
-        // Format the currency
-        const strike = ( t[4].charAt(0) == '$' ) ? t[4].slice(1) : t[4];
-        const price = ( t[5].charAt(0) == '$' ) ? t[5].slice(1) : t[5];
+        const trade = formatTrade(questionsArray);
 
         // TODO remove this from here when askQuestion is made into a recursive promise
         try {
             // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
             const tag = await Trades.create({
                 trader: msg.author.username,
-                ticker: t[0],
-                type: t[1],
-                action: t[2],
-                expiry: expiry,
-                strike: strike,
-                price: price,
-                quantity: t[6]
+                ticker: trade.ticker,
+                type: trade.type,
+                action: trade.action,
+                expiry: trade.expiry,
+                strike: trade.strike,
+                price: trade.price,
+                quantity: trade.quantity
             });
         }
         catch (e) {
@@ -171,8 +213,7 @@ async function askQuestion(msg, questionsArray, index) {
             return msg.reply('Something went wrong with adding a trade');
         }
 
-
-        msg.reply(`⭐️ ${questionsArray[2].answer} ${questionsArray[6].answer} x ${questionsArray[0].answer} ${questionsArray[3].answer} $${strike} ${questionsArray[1].answer} at $${price}`);
+        msg.channel.send(`⭐️ <@${msg.author.id}>: ${trade.action} ${trade.quantity} x ${trade.ticker} ${trade.expiryDisplay} $${trade.strike} ${trade.type} at $${trade.price}`);
         return;
     }
 
@@ -195,8 +236,53 @@ async function askQuestion(msg, questionsArray, index) {
         }
     });
 
+    if ( index === 0 ) msg.reply("This function is deprecated, please use /trade next time.");
     msg.reply(questionsArray[index].question);
     //msg.channel.send(questionsArray[index].question);
+}
+
+// Returns a object representing a formatted trade
+function formatTrade(trade) {
+    let t = null;
+
+    // Apply general field rules
+    if ( trade[0].answer ) {
+        t = trade.map( item => item.answer.trim() );
+    } else if ( trade[0].value ) {
+        t = trade.map( item => item.value );
+    } else {
+        console.log("Invalid trade array");
+        return;
+    }
+
+    // Format ticker
+    const ticker = t[0].toUpperCase();
+    // Format type
+    const type = t[1].charAt(0).toUpperCase() + t[1].slice(1).toLowerCase();
+
+    // Format action
+    const action = t[2].toUpperCase();
+
+    // Format the year in case they didn't enter it
+    const thisYear = dateFormat('yyyy'); 
+    const enteredExpiry = t[3]; 
+    const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
+    const expiryDisplay = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? dateFormat(enteredExpiry, "mmm d") : dateFormat(enteredExpiry, "mmm d yyyy");
+   
+    // Format the currency
+    const strike = ( t[4].charAt(0) == '$' ) ? t[4].slice(1) : t[4];
+    const price = ( t[5].charAt(0) == '$' ) ? t[5].slice(1) : t[5];    
+
+    return {
+        "ticker": ticker,
+        "type": type,
+        "action": action,
+        "expiry": expiry,
+        "expiryDisplay": expiryDisplay,
+        "strike": strike,
+        "price": price,
+        "quantity": t[6]
+    }
 }
 
 function expireTradeOption(id) {
