@@ -106,22 +106,28 @@ client.on('message', async msg => {
         }
 
         const tradesList = await Trades.findAll(whereClause);
+        let tradeListStr = "";
         tradesList.map( trade => {
             const t = trade.expiry;
             const utcStr = `${t.getUTCFullYear()}-${t.getUTCMonth()+1}-${t.getUTCDate()}`;
             const estStr = `${utcStr} 16:00:00 EST`;
-            let expiredStr = "";
 
+            // reformat expiryDate
+            const expiryDateStr = dateFormat(utcStr, "mediumDate");            
+            let tradeStr = `@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price}`;
+            
             // check for an expired trade
             if ( Date.now() > Date.parse(estStr) ) {
-                expiredStr = "[Expired]"
-            }
+                tradeStr = "---" + tradeStr + " [Expired]";
+            }         
 
-            // Reformat expiryDate
-            const expiryDateStr = dateFormat(utcStr, "mediumDate");
+            // add the trade to the list
+            tradeListStr += tradeStr + "\n";
 
-            msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
+            //msg.channel.send(`@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price} ${expiredStr}`);
         });
+        msg.channel.send("```diff\n" + tradeListStr + "\n```");
+        console.log(msg);
     } else if (command === 'removetag') {
         // [mu]
     }
