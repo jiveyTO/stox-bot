@@ -2,5 +2,6 @@
 .env.dev
 .env.prod
 node_modules/
+package-lock.json
 database.sqlite
 test.js
