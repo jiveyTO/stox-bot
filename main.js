@@ -2,7 +2,7 @@ require('dotenv').config();
 const Discord = require('discord.js');
 const Sequelize = require('sequelize');
 const dateFormat = require("dateformat");
-const stockDataHelper = require("./lib/stockDataHelper");
+const marketDataHelper = require('./lib/marketDataHelper')
 
 const client = new Discord.Client();
 const env = process.env.ENVIRONMENT || 'DEV';
@@ -79,10 +79,11 @@ client.on('message', async msg => {
 
     if (command === 'ping') {
         msg.reply('Pong!');
-    } else if (command === 'quote') {
-        const sym = stockDataHelper.parseCommandForSymbol(commandArgs[0]);
-        const embed = await stockDataHelper.stockQuoteMessageEmbed(sym);
-        msg.channel.send(embed);
+    }
+    // quote <stock symbol>
+    else if (command === 'quote') {
+        const embed = await marketDataHelper.quoteMessageEmbed(commandArgs[0])
+        msg.channel.send(embed)
     } else if (command === 'booktrade') {
         askQuestion(msg, questions, 0);
         //msg.reply("im here at the end");
@@ -113,19 +114,19 @@ client.on('message', async msg => {
             const estStr = `${utcStr} 16:00:00 EST`;
 
             // reformat expiryDate
-            const expiryDateStr = dateFormat(utcStr, "mediumDate");            
+            const expiryDateStr = dateFormat(utcStr, "mediumDate");
             let tradeStr = `@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price}`;
-            
+
             // check for an expired trade
             if ( Date.now() > Date.parse(estStr) ) {
                 tradeStr = "---" + tradeStr + " [Expired]";
-            }         
+            }
 
             // add the trade to the list
             tradeListStr += tradeStr + "\n";
         });
         msg.channel.send("```diff\n" + tradeListStr + "\n```");
-    } 
+    }
 
 });
 
@@ -136,7 +137,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
     const trade = formatTrade(interaction.data.options);
 
     const tradeStr = `<@${interaction.member.user.id}>: ${trade.action} ${trade.quantity} x ${trade.ticker}`
-                     + ` ${trade.expiryDisplay} $${trade.strike} ${trade.type} at $${trade.price}`; 
+                     + ` ${trade.expiryDisplay} $${trade.strike} ${trade.type} at $${trade.price}`;
 
     try {
         // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
@@ -150,7 +151,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
             price: trade.price,
             quantity: trade.quantity
         });
-   
+
         // Show the logged trade
         // Type 3 will eat the original message aka ephemeral
         client.api.interactions(interaction.id, interaction.token).callback.post({
@@ -163,7 +164,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
     }
     catch (e) {
-        let errStr = `Something went wrong with adding a trade for ${tradeStr}`; 
+        let errStr = `Something went wrong with adding a trade for ${tradeStr}`;
 
         if (e.name === 'SeqelizeUniqueConstraintError') {
             errStr = 'That trade already exists';
@@ -256,14 +257,14 @@ function formatTrade(trade) {
     const action = t[2].toUpperCase();
 
     // Format the year in case they didn't enter it
-    const thisYear = dateFormat('yyyy'); 
-    const enteredExpiry = t[3]; 
+    const thisYear = dateFormat('yyyy');
+    const enteredExpiry = t[3];
     const expiry = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? `${thisYear}-${dateFormat(enteredExpiry, "mm-dd")}` : dateFormat(enteredExpiry, "yyyy-mm-dd");
     const expiryDisplay = ((new Date(enteredExpiry)).getFullYear() < thisYear ) ? dateFormat(enteredExpiry, "mmm d") : dateFormat(enteredExpiry, "mmm d yyyy");
-   
+
     // Format the currency
     const strike = ( t[4].charAt(0) == '$' ) ? t[4].slice(1) : t[4];
-    const price = ( t[5].charAt(0) == '$' ) ? t[5].slice(1) : t[5];    
+    const price = ( t[5].charAt(0) == '$' ) ? t[5].slice(1) : t[5];
 
     return {
         "ticker": ticker,
