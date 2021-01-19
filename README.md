@@ -2,7 +2,7 @@
 
 ## Available Commands
 
-1.  `!quote <stock symbol>`
+1.  `/trade`
 
     Returns the current stock quote in the channel.
 
