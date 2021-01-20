@@ -1,6 +1,19 @@
-.env
-.env.dev
-.env.prod
+# Common
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+*.swp
+*.log
+
+# Environment
+.idea
+.vscode
+*.iml
+
+# Project
+.env*
 node_modules/
 database.sqlite
-test.js
