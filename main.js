@@ -148,7 +148,7 @@ client.on('message', async msg => {
       const tradeListStr = tradeListArr.map( thisTrade => {
 
         // only add return data on open trades
-        if(tradeLookup[thisTrade.symbol].last) {
+        if(tradeLookup[thisTrade.symbol] && tradeLookup[thisTrade.symbol].last) {
  
           let tradeReturn
           if (thisTrade.action === 'BTO' ) {
@@ -163,12 +163,19 @@ client.on('message', async msg => {
             return `+ ${thisTrade.tradeStr} +${Math.round(tradeReturn*100)/100}%`
           } 
 
+        } else {
+          console.log(thisTrade.symbol + " not found")
         }
 
         return thisTrade.tradeStr
       })
 
-      msg.channel.send('```diff\n' + tradeListStr.join("\n") + '\n```')
+
+      // there's a 2000 char limit when posting to Discord
+      for ( let i=0 ; i < tradeListStr.length ; i+=25 ) {
+        const end = ( i+20 > tradeListStr.length ) ? tradeListStr.length : i+20
+        msg.channel.send('```diff\n' + tradeListStr.slice(i,end).join("\n")  + '\n```') 
+      }
 
     })
 
