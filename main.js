@@ -94,6 +94,7 @@ client.on('message', async msg => {
   } else if (command === 'listtrades') {
     // equivalent to: SELECT * FROM trades WHERE trader=<userFilter>;
 
+    const orderBy = { order: [ ['trader'], ['expiry', 'ASC'] ] }
     let whereClause = {}
     let userFilter = commandArgs[0]
 
@@ -106,9 +107,11 @@ client.on('message', async msg => {
       whereClause = { where: { trader: userFilter } }
     }
 
-    const tradesList = await Trades.findAll(whereClause)
-    let tradeListStr = ''
-    tradesList.map(trade => {
+    const tradesList = await Trades.findAll( { ...whereClause, ...orderBy } )
+
+
+    // do some formatting on the trades
+    const tradeListArr = tradesList.map(trade => {
       const t = trade.expiry
       const utcStr = `${t.getUTCFullYear()}-${t.getUTCMonth() + 1}-${t.getUTCDate()}`
       const estStr = `${utcStr} 16:00:00 EST`
@@ -123,9 +126,53 @@ client.on('message', async msg => {
       }
 
       // add the trade to the list
-      tradeListStr += tradeStr + '\n'
+      return { 
+        tradeStr: tradeStr, 
+        symbol: marketDataHelper.buildOptionsSymbol(trade.ticker, utcStr, trade.type, trade.strike),
+        price: trade.price,
+        action: trade.action
+      }
     })
-    msg.channel.send('```diff\n' + tradeListStr + '\n```')
+
+    // fetch the quotes from our data provider and build the return string
+    marketDataHelper.getQuote( tradeListArr.map( joinStr => joinStr.symbol ).join(',') )
+    .then( fetchData => {
+
+      // index returned data by symbols
+      const tradeLookup = {}
+      for ( let symPosition in fetchData[0] ) {
+        tradeLookup[fetchData[0][symPosition].symbol] = fetchData[0][symPosition] 
+      }
+
+      // build the trade lines with returns
+      const tradeListStr = tradeListArr.map( thisTrade => {
+
+        // only add return data on open trades
+        if(tradeLookup[thisTrade.symbol].last) {
+ 
+          let tradeReturn
+          if (thisTrade.action === 'BTO' ) {
+            tradeReturn = (tradeLookup[thisTrade.symbol].last - thisTrade.price)/thisTrade.price*100
+          } else if ( thisTrade.action === 'STO' ) {
+             tradeReturn = (thisTrade.price - tradeLookup[thisTrade.symbol].last)/thisTrade.price*100
+          }        
+
+          if ( tradeReturn < 0 ) {
+            return `- ${thisTrade.tradeStr} ${Math.round(tradeReturn*100)/100}%` 
+          } else if ( tradeReturn > 0 ) {
+            return `+ ${thisTrade.tradeStr} +${Math.round(tradeReturn*100)/100}%`
+          } 
+
+        }
+
+        return thisTrade.tradeStr
+      })
+
+      msg.channel.send('```diff\n' + tradeListStr.join("\n") + '\n```')
+
+    })
+
+
   }
 })
 
