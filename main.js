@@ -137,8 +137,8 @@ client.on('message', async msg => {
 
     // index returned data by symbols
     const tradeLookup = {}
-    for (const symPosition in fetchData[0]) {
-      tradeLookup[fetchData[0][symPosition].symbol] = fetchData[0][symPosition]
+    for (const s in fetchData) {
+      tradeLookup[fetchData[s].symbol] = fetchData[s]
     }
 
     // build the trade lines with returns
