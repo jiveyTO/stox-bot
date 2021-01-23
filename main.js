@@ -92,18 +92,18 @@ client.on('message', async msg => {
     // [theta]
   } else if (command === 'listtrades') {
     // equivalent to: SELECT * FROM trades WHERE trader=<userFilter>;
-
-    const orderBy = { order: [ ['trader'], ['expiry', 'ASC'] ] }
+    let filter = commandArgs[0]
+    let orderBy = { order: [['trader', 'ASC'], ['expiry', 'ASC'], ['ticker', 'ASC']] }
+    if (filter === 'ticker') orderBy = { order: [['ticker', 'ASC'], ['expiry', 'ASC'], ['trader', 'ASC']] }
     let whereClause = {}
-    let userFilter = commandArgs[0]
 
-    if (userFilter) {
+    if (filter !== 'ticker' && filter) {
       // if they enter their @username
-      if (userFilter.substring(0, 3) === '<@!') {
-        const user = await client.users.fetch(userFilter.substring(3, userFilter.length - 1))
-        userFilter = user.username
+      if (filter.substring(0, 3) === '<@!') {
+        const user = await client.users.fetch(filter.substring(3, filter.length - 1))
+        filter = user.username
       }
-      whereClause = { where: { trader: userFilter } }
+      whereClause = { where: { trader: filter } }
     }
 
     const tradesList = await Trades.findAll({ ...whereClause, ...orderBy })
@@ -165,8 +165,9 @@ client.on('message', async msg => {
     })
 
     // there's a 2000 char limit when posting to Discord
-    for (let i = 0; i < tradeListStr.length; i += 25) {
-      const end = (i + 20 > tradeListStr.length) ? tradeListStr.length : i + 20
+    const pageSize = 25
+    for (let i = 0; i < tradeListStr.length; i += pageSize) {
+      const end = (i + pageSize > tradeListStr.length) ? tradeListStr.length : i + pageSize
       msg.channel.send('```diff\n' + tradeListStr.slice(i, end).join('\n') + '\n```')
     }
   }
