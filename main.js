@@ -79,9 +79,8 @@ client.on('message', async msg => {
 
   if (command === 'ping') {
     msg.reply('Pong!')
-  }
   // quote <stock symbol>
-  else if (command === 'quote') {
+  } else if (command === 'quote') {
     const embed = await marketDataHelper.quoteMessageEmbed(commandArgs[0])
     msg.channel.send(embed)
   } else if (command === 'booktrade') {
@@ -107,8 +106,7 @@ client.on('message', async msg => {
       whereClause = { where: { trader: userFilter } }
     }
 
-    const tradesList = await Trades.findAll( { ...whereClause, ...orderBy } )
-
+    const tradesList = await Trades.findAll({ ...whereClause, ...orderBy })
 
     // do some formatting on the trades
     const tradeListArr = tradesList.map(trade => {
@@ -117,7 +115,7 @@ client.on('message', async msg => {
       const estStr = `${utcStr} 16:00:00 EST`
 
       // reformat expiryDate
-      const expiryDateStr = dateFormat(utcStr, 'mediumDate')
+      const expiryDateStr = dateFormat(utcStr + ' 00:00:00', 'mediumDate')
       let tradeStr = `@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price}`
 
       // check for an expired trade
@@ -126,8 +124,8 @@ client.on('message', async msg => {
       }
 
       // add the trade to the list
-      return { 
-        tradeStr: tradeStr, 
+      return {
+        tradeStr: tradeStr,
         symbol: marketDataHelper.buildOptionsSymbol(trade.ticker, utcStr, trade.type, trade.strike),
         price: trade.price,
         action: trade.action
@@ -135,51 +133,42 @@ client.on('message', async msg => {
     })
 
     // fetch the quotes from our data provider and build the return string
-    marketDataHelper.getQuote( tradeListArr.map( joinStr => joinStr.symbol ).join(',') )
-    .then( fetchData => {
+    const fetchData = await marketDataHelper.getQuote(tradeListArr.map(joinStr => joinStr.symbol).join(','))
 
-      // index returned data by symbols
-      const tradeLookup = {}
-      for ( let symPosition in fetchData[0] ) {
-        tradeLookup[fetchData[0][symPosition].symbol] = fetchData[0][symPosition] 
-      }
+    // index returned data by symbols
+    const tradeLookup = {}
+    for (const symPosition in fetchData[0]) {
+      tradeLookup[fetchData[0][symPosition].symbol] = fetchData[0][symPosition]
+    }
 
-      // build the trade lines with returns
-      const tradeListStr = tradeListArr.map( thisTrade => {
-
-        // only add return data on open trades
-        if(tradeLookup[thisTrade.symbol] && tradeLookup[thisTrade.symbol].last) {
- 
-          let tradeReturn
-          if (thisTrade.action === 'BTO' ) {
-            tradeReturn = (tradeLookup[thisTrade.symbol].last - thisTrade.price)/thisTrade.price*100
-          } else if ( thisTrade.action === 'STO' ) {
-             tradeReturn = (thisTrade.price - tradeLookup[thisTrade.symbol].last)/thisTrade.price*100
-          }        
-
-          if ( tradeReturn < 0 ) {
-            return `- ${thisTrade.tradeStr} ${Math.round(tradeReturn*100)/100}%` 
-          } else if ( tradeReturn > 0 ) {
-            return `+ ${thisTrade.tradeStr} +${Math.round(tradeReturn*100)/100}%`
-          } 
-
-        } else {
-          console.log(thisTrade.symbol + " not found")
+    // build the trade lines with returns
+    const tradeListStr = tradeListArr.map(thisTrade => {
+      // only add return data on open trades
+      if (tradeLookup[thisTrade.symbol] && tradeLookup[thisTrade.symbol].last) {
+        let tradeReturn
+        if (thisTrade.action === 'BTO') {
+          tradeReturn = (tradeLookup[thisTrade.symbol].last - thisTrade.price) / thisTrade.price * 100
+        } else if (thisTrade.action === 'STO') {
+          tradeReturn = (thisTrade.price - tradeLookup[thisTrade.symbol].last) / thisTrade.price * 100
         }
 
-        return thisTrade.tradeStr
-      })
-
-
-      // there's a 2000 char limit when posting to Discord
-      for ( let i=0 ; i < tradeListStr.length ; i+=25 ) {
-        const end = ( i+20 > tradeListStr.length ) ? tradeListStr.length : i+20
-        msg.channel.send('```diff\n' + tradeListStr.slice(i,end).join("\n")  + '\n```') 
+        if (tradeReturn < 0) {
+          return `- ${thisTrade.tradeStr} ${Math.round(tradeReturn * 100) / 100}%`
+        } else if (tradeReturn > 0) {
+          return `+ ${thisTrade.tradeStr} +${Math.round(tradeReturn * 100) / 100}%`
+        }
+      } else {
+        console.log(thisTrade.symbol + ' not found')
       }
 
+      return thisTrade.tradeStr
     })
 
-
+    // there's a 2000 char limit when posting to Discord
+    for (let i = 0; i < tradeListStr.length; i += 25) {
+      const end = (i + 20 > tradeListStr.length) ? tradeListStr.length : i + 20
+      msg.channel.send('```diff\n' + tradeListStr.slice(i, end).join('\n') + '\n```')
+    }
   }
 })
 
@@ -193,7 +182,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
 
   try {
     // equivalent to: INSERT INTO trades (trader, ticker, type, action, expiry, strike, price, quantity ) values (?, ?, ?, ?, ?, ?, ?, ?);
-    const tag = await Trades.create({
+    await Trades.create({
       trader: interaction.member.user.username,
       ticker: trade.ticker,
       type: trade.type,
