@@ -3,6 +3,7 @@ const Discord = require('discord.js')
 const Sequelize = require('sequelize')
 const dateFormat = require('dateformat')
 const marketDataHelper = require('./lib/marketDataHelper')
+const trades = require('./lib/listTrades')
 
 const client = new Discord.Client()
 const env = process.env.ENVIRONMENT || 'DEV'
@@ -91,78 +92,12 @@ client.on('message', async msg => {
   } else if (command === 'tradeinfo') {
     // [theta]
   } else if (command === 'listtrades') {
-    // equivalent to: SELECT * FROM trades WHERE trader=<userFilter>;
-    let filter = commandArgs[0]
-    let orderBy = { order: [['trader', 'ASC'], ['expiry', 'ASC'], ['ticker', 'ASC']] }
-    if (filter === 'ticker') orderBy = { order: [['ticker', 'ASC'], ['expiry', 'ASC'], ['trader', 'ASC']] }
-    let whereClause = {}
-
-    if (filter !== 'ticker' && filter) {
-      // if they enter their @username
-      if (filter.substring(0, 3) === '<@!') {
-        const user = await client.users.fetch(filter.substring(3, filter.length - 1))
-        filter = user.username
-      }
-      whereClause = { where: { trader: filter } }
+    const listTradesOptions = {
+      commandArgs: commandArgs,
+      client: client
     }
 
-    const tradesList = await Trades.findAll({ ...whereClause, ...orderBy })
-
-    // do some formatting on the trades
-    const tradeListArr = tradesList.map(trade => {
-      const t = trade.expiry
-      const utcStr = `${t.getUTCFullYear()}-${t.getUTCMonth() + 1}-${t.getUTCDate()}`
-      const estStr = `${utcStr} 16:00:00 EST`
-
-      // reformat expiryDate
-      const expiryDateStr = dateFormat(utcStr + ' 00:00:00', 'mediumDate')
-      let tradeStr = `@${trade.trader}: ${trade.action} ${trade.quantity} x ${trade.ticker} ${expiryDateStr} $${trade.strike} ${trade.type} at $${trade.price}`
-
-      // check for an expired trade
-      if (Date.now() > Date.parse(estStr)) {
-        tradeStr = '---' + tradeStr + ' [Expired]'
-      }
-
-      // add the trade to the list
-      return {
-        tradeStr: tradeStr,
-        symbol: marketDataHelper.buildOptionsSymbol(trade.ticker, utcStr, trade.type, trade.strike),
-        price: trade.price,
-        action: trade.action
-      }
-    })
-
-    // fetch the quotes from our data provider and build the return string
-    const fetchData = await marketDataHelper.getQuote(tradeListArr.map(joinStr => joinStr.symbol).join(','))
-
-    // index returned data by symbols
-    const tradeLookup = {}
-    for (const s in fetchData) {
-      tradeLookup[fetchData[s].symbol] = fetchData[s]
-    }
-
-    // build the trade lines with returns
-    const tradeListStr = tradeListArr.map(thisTrade => {
-      // only add return data on open trades
-      if (tradeLookup[thisTrade.symbol] && tradeLookup[thisTrade.symbol].last) {
-        let tradeReturn
-        if (thisTrade.action === 'BTO') {
-          tradeReturn = (tradeLookup[thisTrade.symbol].last - thisTrade.price) / thisTrade.price * 100
-        } else if (thisTrade.action === 'STO') {
-          tradeReturn = (thisTrade.price - tradeLookup[thisTrade.symbol].last) / thisTrade.price * 100
-        }
-
-        if (tradeReturn < 0) {
-          return `- ${thisTrade.tradeStr} ${Math.round(tradeReturn * 100) / 100}%`
-        } else if (tradeReturn > 0) {
-          return `+ ${thisTrade.tradeStr} +${Math.round(tradeReturn * 100) / 100}%`
-        }
-      } else {
-        console.log(thisTrade.symbol + ' not found')
-      }
-
-      return thisTrade.tradeStr
-    })
+    const tradeListStr = await trades.getList(Trades, listTradesOptions)
 
     // there's a 2000 char limit when posting to Discord
     const pageSize = 25
@@ -316,10 +251,6 @@ function formatTrade (trade) {
     price: price,
     quantity: t[6]
   }
-}
-
-function expireTradeOption (id) {
-
 }
 
 client.login(process.env.DISCORD_BOT_TOKEN)
