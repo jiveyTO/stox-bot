@@ -6,7 +6,7 @@
 
     Returns the current stock or options quote in the channel.  Option symbol format e.g. "AAPL210115C00123500"
 
-2.  /trade <ticker> <tu[e> <action> <expiry> <strike> <price> <quantity>
+2.  /trade <ticker> <type> <action> <expiry> <strike> <price> <quantity>
 
     Book an options trade
 ## Setup
