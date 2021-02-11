@@ -3,6 +3,7 @@ const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../.env') })
 const apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/guilds/' + process.env.DISCORD_GUILD_ID + '/commands'
 const botToken = process.env.DISCORD_BOT_TOKEN
+
 const commandDataTrade = {
   name: 'trade',
   description: 'Book an options trade',
@@ -279,7 +280,8 @@ async function main () {
     case 'top':
       command = commandDataTop
       break
-    case 'default':
+    default:
+      console.log('You must enter a command')
       command = 'nothing'
   }
 
@@ -293,7 +295,7 @@ async function main () {
   })
   const json = await response.json()
 
-  console.log(json)
+  console.log(JSON.stringify(json))
 }
 
 main()
