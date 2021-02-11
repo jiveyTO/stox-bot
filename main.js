@@ -107,6 +107,49 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         }
       })
       .catch(console.error)
+  } else if (command === 'delete') {
+    // Options will also have at least the ticker
+    interaction.data.options.push({ name: 'trader', value: interaction.member.user.username })
+    interaction.data.options.push({ name: 'ids', value: true })
+    const { command, tradeList, idsMap } = await listTrades.getList(interaction, Trades, client)
+
+    // there's a 2000 char limit when posting to Discord
+    const pageSize = 25
+    client.channels.fetch(interaction.channel_id)
+      .then(channel => {
+        channel.send(command)
+        for (let i = 0; i < tradeList.length; i += pageSize) {
+          const end = (i + pageSize > tradeList.length) ? tradeList.length : i + pageSize
+          channel.send('```diff\n' + tradeList.slice(i, end).join('\n') + '\n```')
+        }
+
+        return channel
+      })
+      .then(channel => {
+        channel.send('Which id do you want to delete?')
+
+        const filter = m => m.author.id === interaction.member.user.id
+        const collector = channel.createMessageCollector(filter, { max: 1, time: 15000 })
+
+        collector.on('collect', m => {
+          if (idsMap[m.content]) {
+            channel.send(`Id ${m.content} was deleted: ${(tradeList[m.content - 1].split(':'))[1]}`)
+
+            const trade = Trades.build({ id: idsMap[m.content] })
+            trade.destroy()
+          } else {
+            channel.send(`Invalid id: ${m.content}`)
+          }
+        })
+
+        collector.on('end', collected => {
+          if (collected.size === 0) channel.send('Your request to /delete timed out without receiving a valid id')
+        })
+      })
+      .catch(error => {
+        console.log('Error with client.channels.fetch')
+        console.error(error)
+      })
   }
 })
 

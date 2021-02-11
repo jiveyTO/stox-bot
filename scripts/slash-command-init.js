@@ -153,6 +153,26 @@ const commandDataList = {
   ]
 }
 
+const commandDelete =
+  {
+    name: 'delete',
+    description: 'Lists your trades, from which you can select one to delete',
+    options: [
+      {
+        name: 'ticker',
+        description: 'Show trades for a certain stock',
+        type: 3,
+        required: true
+      },
+      {
+        name: 'expiry',
+        description: 'Show trades for a particular expiry date',
+        type: 3,
+        required: false
+      }
+    ]
+  }
+
 async function main () {
   const fetch = require('node-fetch')
 
