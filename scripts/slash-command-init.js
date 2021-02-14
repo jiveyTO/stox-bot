@@ -3,6 +3,7 @@ const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../.env') })
 const apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/guilds/' + process.env.DISCORD_GUILD_ID + '/commands'
 const botToken = process.env.DISCORD_BOT_TOKEN
+
 const commandDataTrade = {
   name: 'trade',
   description: 'Book an options trade',
@@ -103,6 +104,26 @@ const commandDataList = {
       required: false
     },
     {
+      name: 'status',
+      description: 'Filter for a particular status',
+      type: 3,
+      choices: [
+        {
+          name: 'Open',
+          value: 'open'
+        },
+        {
+          name: 'Closed',
+          value: 'closed'
+        },
+        {
+          name: 'Expired',
+          value: 'expired'
+        }
+      ],
+      required: false
+    },
+    {
       name: 'range',
       description: 'Expiry range',
       type: 3,
@@ -153,7 +174,7 @@ const commandDataList = {
   ]
 }
 
-const commandDelete =
+const commandDataDelete =
   {
     name: 'delete',
     description: 'Lists your trades, from which you can select one to delete',
@@ -173,13 +194,100 @@ const commandDelete =
     ]
   }
 
+const commandDataTop =
+  {
+    name: 'top',
+    description: 'List the top trades',
+    options: [
+      {
+        name: 'measure',
+        description: 'Measured by dollar amount or precentage',
+        type: 3,
+        choices: [
+          {
+            name: '%',
+            value: '%'
+          },
+          {
+            name: '$',
+            value: '$'
+          }
+        ],
+        required: false
+      },
+      {
+        name: 'status',
+        description: 'Filter for a particular status',
+        type: 3,
+        choices: [
+          {
+            name: 'Open',
+            value: 'open'
+          },
+          {
+            name: 'Closed',
+            value: 'closed'
+          },
+          {
+            name: 'Expired',
+            value: 'expired'
+          }
+        ],
+        required: false
+      },
+      {
+        name: 'entered',
+        description: 'Filter by trade enter date',
+        type: 3,
+        choices: [
+          {
+            name: '-12 weeks',
+            value: '-12'
+          },
+          {
+            name: '-8 weeks',
+            value: '-8'
+          },
+          {
+            name: '-4 weeks',
+            value: '-4'
+          },
+          {
+            name: '-1 weeks',
+            value: '-1'
+          }
+        ],
+        required: false
+      }
+    ]
+  }
+
 async function main () {
   const fetch = require('node-fetch')
 
+  let command = ''
+
+  switch (process.argv[2]) {
+    case 'trade':
+      command = commandDataTrade
+      break
+    case 'list':
+      command = commandDataList
+      break
+    case 'delete':
+      command = commandDataDelete
+      break
+    case 'top':
+      command = commandDataTop
+      break
+    default:
+      console.log('You must enter a command')
+      command = 'nothing'
+  }
+
   const response = await fetch(apiEndpoint, {
     method: 'post',
-    // body: JSON.stringify(commandDataTrade),
-    body: JSON.stringify(commandDataList),
+    body: JSON.stringify(command),
     headers: {
       Authorization: 'Bot ' + botToken,
       'Content-Type': 'application/json'
@@ -187,7 +295,7 @@ async function main () {
   })
   const json = await response.json()
 
-  console.log(json)
+  console.log(JSON.stringify(json))
 }
 
 main()

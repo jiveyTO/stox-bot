@@ -5,6 +5,7 @@ const marketDataHelper = require('./lib/marketDataHelper')
 const listTrades = require('./lib/listTrades')
 const bookTrade = require('./lib/bookTrade')
 const { book } = require('iexcloud_api_wrapper')
+const ensureArray = require('ensure-array')
 
 const client = new Discord.Client()
 const env = process.env.ENVIRONMENT || 'DEV'
@@ -107,6 +108,17 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         }
       })
       .catch(console.error)
+  } else if (command === 'top') {
+    interaction.data.options = ensureArray(interaction.data.options)
+    interaction.data.options.push({ name: 'top', value: { length: 10 } })
+    const { command, tradeList } = await listTrades.getList(interaction, Trades, client)
+
+    client.channels.fetch(interaction.channel_id)
+      .then(channel => {
+        channel.send(command)
+        // trade list is likely no more than top 10
+        channel.send('```diff\n' + tradeList.join('\n') + '\n```')
+      })
   } else if (command === 'delete') {
     // Options will also have at least the ticker
     interaction.data.options.push({ name: 'trader', value: interaction.member.user.username })
