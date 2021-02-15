@@ -43,7 +43,7 @@ if (env === 'PROD') {
  * );
  */
 const Trades = sequelize.define('trades', {
-  guildId: Sequelize.INTEGER,
+  guildId: Sequelize.STRING,
   trader: Sequelize.STRING,
   ticker: Sequelize.STRING,
   type: Sequelize.STRING,
