@@ -43,6 +43,7 @@ if (env === 'PROD') {
  * );
  */
 const Trades = sequelize.define('trades', {
+  guildId: Sequelize.INTEGER,
   trader: Sequelize.STRING,
   ticker: Sequelize.STRING,
   type: Sequelize.STRING,
@@ -52,7 +53,7 @@ const Trades = sequelize.define('trades', {
   price: Sequelize.DECIMAL,
   quantity: Sequelize.INTEGER
 })
-
+ 
 client.once('ready', () => {
   if (env === 'PROD') {
     console.log('Stox bot is online')
@@ -78,7 +79,6 @@ client.on('message', async msg => {
     msg.channel.send(embed)
   } else if (command === 'booktrade') {
     msg.reply('This function is deprecated, please use /trade')
-    // msg.reply("im here at the end");
   } else if (command === 'edittrade') {
     // [zeta]
   } else if (command === 'tradeinfo') {
@@ -145,7 +145,8 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
 
         collector.on('collect', m => {
           if (idsMap[m.content]) {
-            channel.send(`Id ${m.content} was deleted: ${(tradeList[m.content - 1].split(':'))[1]}`)
+            const deleteStr = tradeList[m.content - 1].split(' ').slice(3, 11).join(' ')
+            channel.send(`Id ${m.content} was deleted: ${deleteStr}`)
 
             const trade = Trades.build({ id: idsMap[m.content] })
             trade.destroy()
