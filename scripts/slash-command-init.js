@@ -1,6 +1,7 @@
 
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../.env') })
+
 let apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/guilds/' + process.env.DISCORD_GUILD_ID + '/commands'
 if (process.argv[3] === 'global') {
   apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/commands'

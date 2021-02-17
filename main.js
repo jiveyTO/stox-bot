@@ -1,67 +1,29 @@
 require('dotenv').config()
 const Discord = require('discord.js')
-const Sequelize = require('sequelize')
+const { sequelize, Trade } = require('./models')
 const marketDataHelper = require('./lib/marketDataHelper')
 const listTrades = require('./lib/listTrades')
 const bookTrade = require('./lib/bookTrade')
-const { book } = require('iexcloud_api_wrapper')
 const ensureArray = require('ensure-array')
 
 const client = new Discord.Client()
 const env = process.env.ENVIRONMENT || 'DEV'
-let sequelize = null
 let PREFIX = '!'
 
 if (env === 'PROD') {
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    protocol: 'postgres',
-    logging: false
-  })
+  console.log('You are on PROD and your database url is ' + process.env.DATABASE_URL)
 } else {
-  sequelize = new Sequelize('database', 'user', 'password', {
-    host: 'localhost',
-    dialect: 'sqlite',
-    logging: false,
-    // SQLite only
-    storage: 'database.sqlite'
-  })
   PREFIX = '#'
 }
 
-/*
- * equivalent to: CREATE TABLE trades(
- * id INT,
- * trader VARCHAR(255),
- * ticker VARCHAR(255),
- * type VARCHAR(255),
- * action VARCHAR(255),
- * expiry DATE,
- * strike FLOAT(8,2),
- * price FLOAT(8,2),
- * quantity INT
- * );
- */
-const Trades = sequelize.define('trades', {
-  guildId: Sequelize.STRING,
-  trader: Sequelize.STRING,
-  ticker: Sequelize.STRING,
-  type: Sequelize.STRING,
-  action: Sequelize.STRING,
-  expiry: Sequelize.DATE,
-  strike: Sequelize.DECIMAL,
-  price: Sequelize.DECIMAL,
-  quantity: Sequelize.INTEGER
-})
- 
-client.once('ready', () => {
+client.once('ready', async () => {
   if (env === 'PROD') {
     console.log('Stox bot is online')
   } else {
     console.log('JanTest bot is online')
   }
 
-  Trades.sync()
+  await sequelize.sync()
 })
 
 client.on('message', async msg => {
@@ -93,9 +55,9 @@ client.on('message', async msg => {
 client.ws.on('INTERACTION_CREATE', async interaction => {
   const command = interaction.data.name
   if (command === 'trade') {
-    bookTrade.submit(interaction, Trades, client)
+    bookTrade.submit(interaction, Trade, client)
   } else if (command === 'list') {
-    const { command, tradeList } = await listTrades.getList(interaction, Trades, client)
+    const { command, tradeList } = await listTrades.getList(interaction, Trade, client)
 
     // there's a 2000 char limit when posting to Discord
     const pageSize = 25
@@ -111,7 +73,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
   } else if (command === 'top') {
     interaction.data.options = ensureArray(interaction.data.options)
     interaction.data.options.push({ name: 'top', value: { length: 10 } })
-    const { command, tradeList } = await listTrades.getList(interaction, Trades, client)
+    const { command, tradeList } = await listTrades.getList(interaction, Trade, client)
 
     client.channels.fetch(interaction.channel_id)
       .then(channel => {
@@ -123,7 +85,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
     // Options will also have at least the ticker
     interaction.data.options.push({ name: 'trader', value: interaction.member.user.username })
     interaction.data.options.push({ name: 'ids', value: true })
-    const { command, tradeList, idsMap } = await listTrades.getList(interaction, Trades, client)
+    const { command, tradeList, idsMap } = await listTrades.getList(interaction, Trade, client)
 
     // there's a 2000 char limit when posting to Discord
     const pageSize = 25
@@ -148,7 +110,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
             const deleteStr = tradeList[m.content - 1].split(' ').slice(3, 11).join(' ')
             channel.send(`Id ${m.content} was deleted: ${deleteStr}`)
 
-            const trade = Trades.build({ id: idsMap[m.content] })
+            const trade = Trade.build({ id: idsMap[m.content] })
             trade.destroy()
           } else {
             channel.send(`Invalid id: ${m.content}`)
