@@ -12,7 +12,6 @@ console.log('The process.env.ENVIRONMENT = ' + process.env.ENVIRONMENT)
 
 if (config.logging) config.logging = console.log
 if (config.storage) config.storage = path.join(__dirname, '/../', config.storage)
-if (process.env.DATABASE_URL) config.use_env_variable = process.env.DATABASE_URL
 
 let sequelize
 if (config.use_env_variable) {

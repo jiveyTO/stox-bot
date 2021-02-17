@@ -16,6 +16,7 @@
     "dialect": "mysql"
   },
   "PROD": {
+    "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
     "protocol": "postgres",
     "logging": false
