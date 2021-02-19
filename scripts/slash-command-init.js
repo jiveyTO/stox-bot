@@ -157,6 +157,18 @@ const commandDataList = {
       type: 3,
       choices: [
         {
+          name: '-1 day',
+          value: '-1days'
+        },
+        {
+          name: '-2 day',
+          value: '-2days'
+        },
+        {
+          name: '-3 day',
+          value: '-3days'
+        },
+        {
           name: '-1 week',
           value: '-1'
         },
