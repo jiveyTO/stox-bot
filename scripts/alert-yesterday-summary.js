@@ -1,4 +1,5 @@
-require('dotenv').config({ path: '../.env' })
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '/../.env') })
 const Discord = require('discord.js')
 const { Trade } = require('../models')
 const listTrades = require('../lib/listTrades')
@@ -10,7 +11,6 @@ const env = process.env.ENVIRONMENT || 'DEV'
 const channelId = (env === 'DEV') ? '798776679723565057' : '777541535214469191'
 
 async function alertYesterdaysTrades (channel) {
-  console.log('im in alertYest')
   // typically getList is called with an interaction event
   // this is a hack and getList should be refactored
   const interaction = {
@@ -41,20 +41,24 @@ client.once('ready', () => {
     console.log('Stox bot is online')
   } else {
     console.log('JanTest bot is online')
-
-    client.guilds.fetch(process.env.DISCORD_GUILD_ID)
-      .then(guild => {
-        if (guild.available) {
-          console.log(guild.name)
-
-          const textChannel = guild.channels.resolve(channelId)
-          if (textChannel) {
-            alertYesterdaysTrades(textChannel)
-          }
-        }
-      })
-      .catch(console.error)
   }
+
+  client.guilds.fetch(process.env.DISCORD_GUILD_ID)
+    .then(guild => {
+      if (guild.available) {
+        const textChannel = guild.channels.resolve(channelId)
+        if (textChannel) {
+          alertYesterdaysTrades(textChannel)
+          //client.destroy()
+        }
+      }
+    })
+    .catch(err => {
+      console.log(err)
+    })
 })
+
+// shut down bot after 4s
+client.setTimeout(() => { client.destroy() }, 4000)
 
 client.login(process.env.DISCORD_BOT_TOKEN)
