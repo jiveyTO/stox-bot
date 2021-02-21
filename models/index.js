@@ -8,8 +8,6 @@ const env = process.env.ENVIRONMENT || 'DEV'
 const config = require(path.join(__dirname, '/../config/config.json'))[env]
 const db = {}
 
-console.log('The process.env.ENVIRONMENT = ' + process.env.ENVIRONMENT)
-
 if (config.logging) config.logging = console.log
 if (config.storage) config.storage = path.join(__dirname, '/../', config.storage)
 

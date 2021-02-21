@@ -48,8 +48,11 @@ client.once('ready', () => {
       if (guild.available) {
         const textChannel = guild.channels.resolve(channelId)
         if (textChannel) {
-          alertYesterdaysTrades(textChannel)
-          //client.destroy()
+          const n = (new Date()).getDay()
+          if (n > 1 && n < 7) {
+            alertYesterdaysTrades(textChannel)
+            // client.destroy()
+          }
         }
       }
     })
