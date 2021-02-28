@@ -1,7 +1,11 @@
 
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../.env') })
-const apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/guilds/' + process.env.DISCORD_GUILD_ID + '/commands'
+
+let apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/guilds/' + process.env.DISCORD_GUILD_ID + '/commands'
+if (process.argv[3] === 'global') {
+  apiEndpoint = 'https://discord.com/api/v8/applications/' + process.env.DISCORD_BOT_ID + '/commands'
+}
 const botToken = process.env.DISCORD_BOT_TOKEN
 
 const commandDataTrade = {
@@ -152,6 +156,18 @@ const commandDataList = {
       description: 'Filter by trade enter date',
       type: 3,
       choices: [
+        {
+          name: '-1 day',
+          value: '-1days'
+        },
+        {
+          name: '-2 day',
+          value: '-2days'
+        },
+        {
+          name: '-3 day',
+          value: '-3days'
+        },
         {
           name: '-1 week',
           value: '-1'
