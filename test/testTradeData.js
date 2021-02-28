@@ -68,6 +68,76 @@ const tradesArray = [
     quantity: 4,
     createdAt: new Date(2021, 1, 22),
     updatedAt: new Date(2021, 1, 22)
+  },
+  {
+    id: 6,
+    guild: '1234567890',
+    trader: 'johnSmith',
+    ticker: 'TSLA',
+    type: 'Put',
+    action: 'STO',
+    expiry: new Date(2021, 0, 29),
+    strike: 800,
+    price: 10.00,
+    quantity: 9,
+    createdAt: new Date(2021, 0, 22),
+    updatedAt: new Date(2021, 0, 22)
+  },
+  {
+    id: 7,
+    guild: '1234567890',
+    trader: 'johnSmith',
+    ticker: 'TSLA',
+    type: 'Put',
+    action: 'STO',
+    expiry: new Date(2021, 0, 29),
+    strike: 800,
+    price: 9.00,
+    quantity: 10,
+    createdAt: new Date(2021, 0, 22),
+    updatedAt: new Date(2021, 0, 22)
+  },
+  {
+    id: 8,
+    guild: '1234567890',
+    trader: 'johnSmith',
+    ticker: 'TSLA',
+    type: 'Put',
+    action: 'STO',
+    expiry: new Date(2021, 0, 29),
+    strike: 800,
+    price: 14.15,
+    quantity: 4,
+    createdAt: new Date(2021, 0, 22),
+    updatedAt: new Date(2021, 0, 22)
+  },
+  {
+    id: 9,
+    guild: '1234567890',
+    trader: 'johnSmith',
+    ticker: 'TSLA',
+    type: 'Put',
+    action: 'BTC',
+    expiry: new Date(2021, 0, 29),
+    strike: 800,
+    price: 6.50,
+    quantity: 14,
+    createdAt: new Date(2021, 0, 22),
+    updatedAt: new Date(2021, 0, 22)
+  },
+  {
+    id: 10,
+    guild: '1234567890',
+    trader: 'johnSmith',
+    ticker: 'TSLA',
+    type: 'Put',
+    action: 'BTC',
+    expiry: new Date(2021, 0, 29),
+    strike: 800,
+    price: 6.50,
+    quantity: 4,
+    createdAt: new Date(2021, 0, 22),
+    updatedAt: new Date(2021, 0, 22)
   }
 ]
 
@@ -95,21 +165,17 @@ const pricesArray = [
 exports.prices = pricesArray
 
 const historicalPrices = {
+  'TSLA|2021-01-29': {
+    date: '2021-02-26',
+    close: 793.53
+  },
   'TSLA|2021-02-26': {
     date: '2021-02-26',
-    open: 700,
-    high: 706.7,
-    low: 659.51,
-    close: 675.5,
-    volume: 41089173
+    close: 675.5
   },
   'FB|2021-02-26': {
     date: '2021-02-26',
-    open: 256.47,
-    high: 265.55,
-    low: 256.47,
-    close: 257.62,
-    volume: 26619517
+    close: 257.62
   }
 }
 
