@@ -14,8 +14,8 @@ async function alertYesterdaysTrades (channel) {
   // typically getList is called with an interaction event
   // this is a hack and getList should be refactored
   const interaction = {
-    name: 'list',
     data: {
+      name: 'list',
       options: [
         { name: 'entered', value: '-1days' }
       ]

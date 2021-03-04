@@ -5,7 +5,12 @@ const marketDataHelper = require('./lib/marketDataHelper')
 const listTrades = require('./lib/listTrades')
 const bookTrade = require('./lib/bookTrade')
 const ensureArray = require('ensure-array')
+const koa = require('./api/koaServer')
 
+// start the api server
+koa.start()
+
+// start the discord server
 const client = new Discord.Client()
 const env = process.env.ENVIRONMENT || 'DEV'
 let PREFIX = '!'
@@ -43,8 +48,6 @@ client.on('message', async msg => {
     msg.reply('This function is deprecated, please use /trade')
   } else if (command === 'edittrade') {
     // [zeta]
-  } else if (command === 'tradeinfo') {
-    // [theta]
   } else if (command === 'listtrades') {
     msg.reply('This function is deprecated, please use /list')
   }

@@ -16,5 +16,6 @@ Thumbs.db
 # Project
 .env*
 node_modules/
+database_test.sqlite
 database.sqlite
 database_test.sqlite
