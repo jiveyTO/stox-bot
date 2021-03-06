@@ -13,6 +13,7 @@ const typeDefs = gql`
     type: String
     action: String
     expiry: String
+    expiryStr: String
     strike: Float
     price: Float
     quantity: Int
@@ -43,7 +44,6 @@ const resolvers = {
       const { tradeData } = await listTrades.getList(interaction, Trade, client)
 
       return tradeData.map(trade => {
-        trade.expiry = trade.expiryStr
         trade.closedAmt = trade.closedQty || 0
         trade.expiredAmt = (trade.expired) ? trade.quantity - (trade.closedQty || 0) : 0
         trade.returnPercent = trade.calcReturn
