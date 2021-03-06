@@ -8,8 +8,9 @@ const start = () => {
 
   app.use(server.getMiddleware())
 
-  app.listen({ port: process.env.PORT || 4000 }, () => 
-    console.log(`🚀 Graphql server ready at http://localhost:4000${server.graphqlPath}`)
+  const apiPort = process.env.PORT || 4000
+  app.listen({ port: apiPort }, () =>
+    console.log(`🚀 Graphql server ready at http://localhost:${apiPort}${server.graphqlPath}`)
   )
 }
 
