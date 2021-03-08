@@ -20,10 +20,12 @@
   "PROD": {
     "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": false
+      }
+    },
     "protocol": "postgres",
-    "logging": false,
-    "ssl": {
-      "rejectUnauthorized": false
-    }
+    "logging": false
   }
 }
