@@ -1,10 +1,11 @@
-const { gql } = require('apollo-server-koa')
+const { gql, AuthenticationError } = require('apollo-server-koa')
 const listTrades = require('../lib/listTrades')
 const { Trade } = require('../models')
 
 const typeDefs = gql`
   type Query {
     trades: [Trade!]!
+    login(email: String!, password: String!): String!
   }
   type Trade {
     id: ID
@@ -28,7 +29,18 @@ exports.typeDefs = typeDefs
 
 const resolvers = {
   Query: {
-    trades: async () => {
+    login: (_, { email, password }, context) => {
+      const jwt = context.models.User.login(email, password)
+
+      if (!jwt) throw new AuthenticationError('Invalid credentials')
+
+      return jwt
+    },
+    trades: async (_, __, context) => {
+      const loggedIn = context.models.User.loggedIn()
+
+      if (!loggedIn) throw new AuthenticationError('Invalid credentials')
+
       // typically getList is called with an interaction event
       // this is a hack and getList should be refactored
       const interaction = {
@@ -41,6 +53,9 @@ const resolvers = {
       // this is a hack and getList should be refactored
       const client = {}
 
+      console.log('****')
+      console.log('**** making expensive call to getList for the trades ****')
+      console.log('****')
       const { tradeData } = await listTrades.getList(interaction, Trade, client)
 
       return tradeData.map(trade => {

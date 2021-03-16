@@ -22,6 +22,7 @@
     "ensure-array": "^1.0.0",
     "graphql": "^15.5.0",
     "iexcloud_api_wrapper": "^1.1.5",
+    "jsonwebtoken": "^8.5.1",
     "pg": "^8.5.1",
     "sequelize": "^6.3.5",
     "sqlite3": "^5.0.1"
