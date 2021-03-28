@@ -18,6 +18,7 @@ const typeDefs = gql`
     strike: Float
     price: Float
     quantity: Int
+    principal: Float
     returnPercent: Float
     returnDollar: Float
     closedAmt: Int
