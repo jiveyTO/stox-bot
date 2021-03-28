@@ -72,7 +72,7 @@ client.once('ready', () => {
       if (!textChannel) return null
 
       const n = (new Date()).getDay()
-      //if (n !== 0) return null
+      if (n !== 0) return null
 
       weeklyTopTrade(textChannel)
     })
