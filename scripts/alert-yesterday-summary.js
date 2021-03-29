@@ -34,6 +34,8 @@ async function alertYesterdaysTrades (channel) {
     const end = (i + pageSize > tradeList.length) ? tradeList.length : i + pageSize
     channel.send('```diff\n' + tradeList.slice(i, end).join('\n') + '\n```')
   }
+
+  channel.send('Visit Stox dashboard at https://stox-web-toronto.herokuapp.com')
 }
 
 client.once('ready', () => {
