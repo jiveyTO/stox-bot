@@ -12,47 +12,49 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   };
-  Trade.init({
-    guild: {
-      type: DataTypes.STRING,
-      allowNull: false
+  Trade.init(
+    {
+      guild: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      trader: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      ticker: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      type: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      action: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      expiry: {
+        type: DataTypes.DATE,
+        allowNull: false
+      },
+      strike: {
+        type: DataTypes.DECIMAL,
+        allowNull: false
+      },
+      price: {
+        type: DataTypes.DECIMAL,
+        allowNull: false
+      },
+      quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      }
     },
-    trader: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    ticker: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    type: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    action: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    expiry: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    strike: {
-      type: DataTypes.DECIMAL,
-      allowNull: false
-    },
-    price: {
-      type: DataTypes.DECIMAL,
-      allowNull: false
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    }
-  }, {
-    sequelize,
-    tableName: 'trades',
-    modelName: 'Trade'
-  })
+    {
+      sequelize,
+      tableName: 'trades',
+      modelName: 'Trade'
+    })
   return Trade
 }

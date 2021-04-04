@@ -54,7 +54,7 @@ async function weeklyTopTrade (channel) {
   sortedTradeArr = sortedTradeArr.sort((a, b) => b.dollarReturn - a.dollarReturn)
 
   channel.send('Trade of the week:')
-  channel.send('```diff\n' + sortedTradeArr[0].tradeStr2 + '\n```')
+  channel.send('```diff\n' + sortedTradeArr?.[0]?.tradeStr2 + '\n```')
 }
 
 client.once('ready', () => {

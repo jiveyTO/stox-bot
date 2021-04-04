@@ -1,28 +1,34 @@
 const { gql, AuthenticationError } = require('apollo-server-koa')
 const listTrades = require('../lib/listTrades')
-const { Trade } = require('../models')
+const { Trade, Settings } = require('../models')
 
 const typeDefs = gql`
   type Query {
     trades: [Trade!]!
     login(email: String!, password: String!): String!
+    alerts(guild: String!): [Alert!]!
   }
   type Trade {
     id: ID
-    trader: String
-    ticker: String
-    type: String
-    action: String
-    expiry: String
+    trader: String!
+    ticker: String!
+    type: String!
+    action: String!
+    expiry: String!
     expiryStr: String
-    strike: Float
-    price: Float
-    quantity: Int
+    strike: Float!
+    price: Float!
+    quantity: Int!
     principal: Float
     returnPercent: Float
     returnDollar: Float
     closedAmt: Int
     expiredAmt: Int
+  }
+  type Alert {
+    guild: String!
+    name: String!
+    value: String!
   }
 `
 
@@ -66,6 +72,16 @@ const resolvers = {
         trade.returnDollar = trade.dollarReturn
         return trade
       })
+    },
+    alerts: async (_, { guild }, context) => {
+      const loggedIn = context.models.User.loggedIn()
+
+      if (!loggedIn) throw new AuthenticationError('Invalid credentials')
+
+      const whereClause = { category: 'alert' }
+      const alertsList = await Settings.findAll({ where: whereClause })
+
+      return alertsList
     }
   }
 }
