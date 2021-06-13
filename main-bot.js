@@ -56,6 +56,13 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
   if (command === 'trade') {
     bookTrade.submit(interaction, Trade, client)
   } else if (command === 'list') {
+    // ack the command so it doesn't say interaciton failed
+    client.api.interactions(interaction.id, interaction.token).callback.post({ 
+      data: {
+        type: 4
+      }
+    })
+
     const { command, tradeList } = await listTrades.getList(interaction, Trade, client)
 
     // there's a 2000 char limit when posting to Discord
@@ -69,7 +76,15 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         }
       })
       .catch(console.error)
+      
   } else if (command === 'top') {
+    // ack the command so it doesn't say interaciton failed
+    client.api.interactions(interaction.id, interaction.token).callback.post({ 
+      data: {
+        type: 4
+      }
+    })
+
     interaction.data.options = ensureArray(interaction.data.options)
     interaction.data.options.push({ name: 'top', value: { length: 10 } })
     const { command, tradeList } = await listTrades.getList(interaction, Trade, client)
@@ -81,6 +96,13 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         channel.send('```diff\n' + tradeList.join('\n') + '\n```')
       })
   } else if (command === 'delete') {
+    // ack the command so it doesn't say interaciton failed
+    client.api.interactions(interaction.id, interaction.token).callback.post({ 
+      data: {
+        type: 4
+      }
+    })
+
     // Options will also have at least the ticker
     interaction.data.options.push({ name: 'trader', value: interaction.member.user.username })
     interaction.data.options.push({ name: 'ids', value: true })
