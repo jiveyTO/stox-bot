@@ -1,8 +1,7 @@
-'use strict'
 const { Model } = require('sequelize')
 
 module.exports = (sequelize, DataTypes) => {
-  class Trade extends Model {
+  class Settings extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,50 +10,32 @@ module.exports = (sequelize, DataTypes) => {
     static associate (models) {
       // define association here
     }
-  };
-  Trade.init(
+  }
+
+  Settings.init(
     {
       guild: {
         type: DataTypes.STRING,
         allowNull: false
       },
-      trader: {
+      category: {
         type: DataTypes.STRING,
         allowNull: false
       },
-      ticker: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       },
-      type: {
+      value: {
         type: DataTypes.STRING,
-        allowNull: false
-      },
-      action: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-      expiry: {
-        type: DataTypes.DATE,
-        allowNull: false
-      },
-      strike: {
-        type: DataTypes.DECIMAL,
-        allowNull: false
-      },
-      price: {
-        type: DataTypes.DECIMAL,
-        allowNull: false
-      },
-      quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true
       }
     },
     {
       sequelize,
-      tableName: 'trades',
-      modelName: 'Trade'
-    })
-  return Trade
+      tableName: 'settings',
+      modelName: 'Settings'
+    }
+  )
+  return Settings
 }

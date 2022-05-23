@@ -7,15 +7,15 @@ const listTrades = require('../lib/listTrades')
 const client = new Discord.Client()
 const env = process.env.ENVIRONMENT || 'DEV'
 
-//TODO hard coded for now
+// TODO hard coded for now
 const channelId = (env === 'DEV') ? '798776679723565057' : '777541535214469191'
 
 async function alertYesterdaysTrades (channel) {
   // typically getList is called with an interaction event
   // this is a hack and getList should be refactored
   const interaction = {
-    name: 'list',
     data: {
+      name: 'list',
       options: [
         { name: 'entered', value: '-1days' }
       ]
@@ -34,6 +34,8 @@ async function alertYesterdaysTrades (channel) {
     const end = (i + pageSize > tradeList.length) ? tradeList.length : i + pageSize
     channel.send('```diff\n' + tradeList.slice(i, end).join('\n') + '\n```')
   }
+
+  channel.send('Visit Stox dashboard at https://stox-web-toronto.herokuapp.com')
 }
 
 client.once('ready', () => {
@@ -45,15 +47,15 @@ client.once('ready', () => {
 
   client.guilds.fetch(process.env.DISCORD_GUILD_ID)
     .then(guild => {
-      if (guild.available) {
-        const textChannel = guild.channels.resolve(channelId)
-        if (textChannel) {
-          const n = (new Date()).getDay()
-          if (n > 1 && n < 7) {
-            alertYesterdaysTrades(textChannel)
-            // client.destroy()
-          }
-        }
+      if (!guild.available) return null
+
+      const textChannel = guild.channels.resolve(channelId)
+      if (!textChannel) return null
+
+      const n = (new Date()).getDay()
+      if (n > 1 && n < 7) {
+        alertYesterdaysTrades(textChannel)
+        // client.destroy()
       }
     })
     .catch(err => {

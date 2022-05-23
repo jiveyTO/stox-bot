@@ -5,32 +5,35 @@
   "main": "main.js",
   "scripts": {
     "test": "jest",
-    "start": "node main.js"
+    "start": "node main-api.js"
   },
   "author": "",
   "license": "ISC",
   "engines": {
-    "node": "12.19.x",
+    "node": "14.x",
     "npm": "*"
   },
   "dependencies": {
+    "apollo-server-koa": "^2.22.2",
     "axios": "^0.21.1",
-    "dateformat": "^4.4.1",
-    "discord.js": "^12.5.1",
+    "dateformat": "^4.5.1",
+    "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
     "ensure-array": "^1.0.0",
+    "graphql": "^15.5.0",
     "iexcloud_api_wrapper": "^1.1.5",
+    "jsonwebtoken": "^8.5.1",
     "pg": "^8.5.1",
-    "sequelize": "^6.3.5",
-    "sqlite3": "^5.0.1"
+    "sequelize": "^6.6.2",
+    "sqlite3": "^5.0.2"
   },
   "devDependencies": {
-    "eslint": "^7.17.0",
+    "eslint": "^7.23.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.1.3",
+    "eslint-plugin-jest": "^24.3.3",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-promise": "^4.3.1",
     "jest": "^26.6.3"
   }
 }
